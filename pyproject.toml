@@ -1,0 +1,17 @@
+[project]
+name = "johny-twitter-branch"
+version = "0.1.0"
+description = "Portable Twitter/X branch module for johny-bot-clean-like Telegram content bots."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Johny Bot contributors" }]
+dependencies = []
+
+[project.scripts]
+johny-twitter-branch = "johny_twitter_branch.cli:main"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
