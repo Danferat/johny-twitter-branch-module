@@ -51,3 +51,17 @@ def test_inspect_target_reports_missing_files(tmp_path: Path) -> None:
     assert not all_required_ok(checks)
     assert any(check.name == "src/bot/twitter.py" and not check.ok for check in checks)
 
+
+def test_inspect_target_requires_publish_lock_marker(tmp_path: Path) -> None:
+    path = tmp_path / "src" / "db"
+    path.mkdir(parents=True)
+    (path / "models.py").write_text("# no twitter publish lock yet\n", encoding="utf-8")
+
+    checks = inspect_target(tmp_path)
+
+    assert any(
+        check.name == "src/db/models.py"
+        and not check.ok
+        and "mark_post_publishing" in check.detail
+        for check in checks
+    )

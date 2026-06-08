@@ -28,16 +28,20 @@
    - проверка: текст в `TOPIC_TWITTER` вызывает `handle_twitter`, callback `twitter_publish` вызывает `handle_twitter_publish`.
 6. Подключи кнопку публикации:
    - проверка: черновик содержит inline button `Опубликовать в Twitter`.
-7. Прогони тесты:
+7. Подключи idempotency guard:
+   - проверка: `src/db/models.py` содержит `mark_post_publishing`; publish handler делает `draft -> publishing` до X API и повторный callback не вызывает publisher.
+8. Прогони тесты:
    - проверка: compileall и targeted pytest проходят.
-8. Попроси пользователя заполнить API:
+9. Попроси пользователя заполнить API:
    - проверка: `smoke-auth` показывает только `SET/MISSING`, `TWITTER_AUTH_OK=True` и `USERNAME=@...`.
-9. Проведи end-to-end в Telegram:
+10. Проведи end-to-end в Telegram:
    - проверка: draft создаётся, публикация требует нажатия, сообщение обновляется ссылкой на пост.
 
 ## Что нельзя делать
 
 - Не публиковать автоматически при получении текста.
+- Не вызывать Twitter/X API при генерации, рерайте, выборе формата или выборе модели; внешний X POST разрешён только в `twitter_publish` после явного нажатия кнопки.
+- Не вызывать `TwitterPublisher.publish()` без атомарного `draft -> publishing` lock.
 - Не выводить секреты в терминал, README, логи, тесты, final report.
 - Не использовать Bearer Token как замену user-context credentials для публикации.
 - Не просить numeric Telegram user/channel IDs как основной формат пользовательской настройки. Используй `@username` или `https://t.me/...`, а topic id пусть ловят команды.
@@ -52,4 +56,3 @@ python -m compileall -q src tests
 python -m pytest -q tests/test_twitter.py tests/test_config.py tests/test_router.py
 python -m johny_twitter_branch smoke-auth --env /path/to/target/.env
 ```
-

@@ -1,7 +1,7 @@
 ## Technology Map
 - Runtime/Platform: Python 3.11+, Telegram content bot host, Twitter/X API v2.
 - Core Stack: stdlib OAuth 1.0a publisher, Markdown prompt, CLI diagnostics, johny-bot-clean integration templates.
-- Components and Responsibilities: `publisher.py` signs and sends X API requests; `prompts/twitter_post.md` constrains generation; `integration/johny_bot_clean/` contains files to copy into a compatible host; `docs/` guides the user and coding agent.
+- Components and Responsibilities: `publisher.py` signs and sends X API requests only from explicit publish flows; `prompts/twitter_post.md` constrains generation; `integration/johny_bot_clean/` contains files to copy into a compatible host, including the `draft -> publishing -> published` guard; `docs/` guides the user and coding agent.
 - Why This Stack: the module stays dependency-light, reviewable by an AI agent, and easy to graft into bots that already have Telegram routing, AI text generation and draft storage.
 
 # Johny Twitter Branch Module
@@ -10,11 +10,14 @@ GitHub-ready module for adding a `Twitter` forum branch to a `johny-bot-clean`-l
 
 The branch accepts source text in a Telegram topic, generates one Twitter/X-ready draft, stores it in the host bot workflow and publishes it only after an admin clicks the inline publish button.
 
+Generation, regeneration, revision and model-selection actions do not call Twitter/X API. The host integration must call X only from the explicit `twitter_publish` callback after atomically moving the draft from `draft` to `publishing`; repeated callback deliveries must stop before `TwitterPublisher.publish()`.
+
 ## What Is Included
 
 - Portable Twitter/X API v2 publisher with OAuth 1.0a user-context signing.
 - English-only `twitter_post` prompt for one post up to 280 characters.
 - Integration files for a host project shaped like `johny-bot-clean`.
+- Idempotency guard pattern for host storage: `draft -> publishing -> published`.
 - Agent playbook and user setup docs in Russian.
 - CLI:
   - `guide` prints the installation sequence.
@@ -56,6 +59,7 @@ The target project should already have:
 - `python-telegram-bot` based update routing.
 - A `PostGenerator` or compatible service with `generate_post(source, prompt_name=..., style_prompt_name=...)`.
 - A draft storage model similar to `create_post`, `get_post_by_message_id`, `get_latest_revision_for_post`, `update_post_status`.
+- An atomic status helper like `mark_post_publishing(post_id)` that succeeds only once for `draft -> publishing`.
 - A topic setup flow similar to `/setup_topics` and `/set_topic`.
 - Runtime `context.bot_data` with text AI clients and config.
 
@@ -86,6 +90,8 @@ python -m johny_twitter_branch smoke-auth --env /path/to/target/.env
 ```
 
 `smoke-auth` performs a safe auth check and does not create a post.
+
+Runtime X API calls are limited to explicit publication. Sending source text to the Telegram topic, editing a draft, switching a model or regenerating a draft must not call X.
 
 ## Official X Docs Checked
 

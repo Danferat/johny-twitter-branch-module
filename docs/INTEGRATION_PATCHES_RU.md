@@ -114,7 +114,31 @@ def build_twitter_publish_keyboard(
     )
 ```
 
-## 8. `src/main.py`
+## 8. `src/db/models.py`
+
+Добавить helper атомарной блокировки публикации:
+
+```python
+async def mark_post_publishing(db: aiosqlite.Connection, post_id: int) -> bool:
+    """Atomically reserve a draft post for external publication."""
+    cursor = await db.execute(
+        """
+        UPDATE posts
+           SET status = 'publishing',
+               updated_at = CURRENT_TIMESTAMP
+         WHERE id = ? AND status = 'draft'
+        """,
+        (post_id,),
+    )
+    await db.commit()
+    return cursor.rowcount == 1
+```
+
+Важно: Twitter/X API должен вызываться только после успешного перехода `draft -> publishing`.
+Повторный callback, двойной клик или повторная доставка Telegram update не должны доходить до `TwitterPublisher.publish()`.
+После успешного API POST статус меняется на `published`; при `TwitterPublishError` черновик возвращается в `draft`.
+
+## 9. `src/main.py`
 
 Импорты:
 
@@ -157,7 +181,7 @@ application.add_handler(
 )
 ```
 
-## 9. Model defaults
+## 10. Model defaults
 
 Если проект использует per-topic model JSON, добавить:
 
@@ -179,7 +203,7 @@ application.add_handler(
 
 Сохрани существующие ключи; не перезаписывай весь JSON ради одного topic.
 
-## 10. Тесты
+## 11. Тесты
 
 Скопировать:
 
@@ -196,4 +220,3 @@ python -m compileall -q src tests
 python -m pytest -q tests/test_twitter.py tests/test_config.py tests/test_router.py
 python -m johny_twitter_branch doctor --target /path/to/target
 ```
-

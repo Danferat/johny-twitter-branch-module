@@ -33,7 +33,7 @@ HOST_PATCH_POINTS = (
     "src/bot/helpers.py",
     "src/bot/setup.py",
     "src/bot/keyboards.py",
+    "src/db/models.py",
     "src/main.py",
     ".env.example",
 )
-

@@ -46,9 +46,12 @@ USERNAME=@...
 
 - inline callback `twitter_publish` зарегистрирован в `src/main.py`;
 - `context.bot_data["twitter_publisher"]` инициализируется после загрузки config;
+- `src/db/models.py` содержит `mark_post_publishing`, а handler вызывает publisher только после успешного `draft -> publishing`;
 - App имеет права Read and Write;
 - Access Token/Secret сгенерированы после включения Read and Write;
 - текст не длиннее 280 символов.
+
+Если в статистике видны POST-запросы до нажатия publish-кнопки, сначала отделите Telegram Bot API POST (`getUpdates`, `sendMessage`, `editMessageText`) от X API POST (`/2/tweets`). Runtime-публикация в X должна происходить только из `twitter_publish`.
 
 ## 5. Сообщение в ветке игнорируется
 
@@ -62,4 +65,3 @@ USERNAME=@...
 ## 6. Твит выглядит как ответ ассистента
 
 Проверьте, что в target project лежит свежий `src/prompts/twitter_post.md`. Он должен явно говорить, что входящий текст - сырьё для публикации, а не вопрос к ассистенту.
-

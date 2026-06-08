@@ -22,11 +22,12 @@ Agent checklist:
 1. Copy integration/johny_bot_clean/src/bot/twitter.py to target src/bot/twitter.py.
 2. Copy integration/johny_bot_clean/src/services/twitter_publisher.py to target src/services/twitter_publisher.py.
 3. Copy prompts/twitter_post.md to target src/prompts/twitter_post.md.
-4. Patch target config/router/helpers/setup/keyboards/main using docs/INTEGRATION_PATCHES_RU.md.
+4. Patch target config/router/helpers/setup/keyboards/db/main using docs/INTEGRATION_PATCHES_RU.md.
 5. Add .env fields from .env.example. Do not print or commit secrets.
 6. In Telegram, create or bind the forum topic with /setup_topics or /set_topic twitter.
-7. Run compileall, targeted pytest, then doctor.
-8. Run smoke-auth only after the user confirms credentials are present.
+7. Confirm X API is reachable only from twitter_publish after draft -> publishing lock.
+8. Run compileall, targeted pytest, then doctor.
+9. Run smoke-auth only after the user confirms credentials are present.
 
 User checklist:
 1. Create an X developer app at https://console.x.com/.
@@ -113,4 +114,3 @@ def _smoke_auth(env_path: Path) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

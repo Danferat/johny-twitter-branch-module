@@ -112,6 +112,10 @@ def _patch_marker_checks(target: Path) -> list[Check]:
             "build_twitter_publish_keyboard",
             "twitter_publish",
         ),
+        "src/db/models.py": (
+            "mark_post_publishing",
+            "status = 'publishing'",
+        ),
         "src/main.py": (
             "handle_twitter",
             "handle_twitter_publish",
@@ -178,4 +182,3 @@ def _env_checks(target: Path) -> list[Check]:
         )
     )
     return checks
-

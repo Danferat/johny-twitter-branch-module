@@ -20,6 +20,7 @@ from src.db.models import (
     create_post,
     get_latest_revision_for_post,
     get_post_by_message_id,
+    mark_post_publishing,
     update_post_status,
 )
 from src.services.post_generator import PostGenerator
@@ -124,6 +125,14 @@ async def handle_twitter_publish(
             else post["generated_text"]
         )
 
+        locked = await mark_post_publishing(db, post["id"])
+        if not locked:
+            await query.answer(
+                "Публикация уже запущена или завершена.",
+                show_alert=True,
+            )
+            return
+
         publisher: TwitterPublisher = context.bot_data.get(
             "twitter_publisher",
             TwitterPublisher(),
@@ -137,6 +146,8 @@ async def handle_twitter_publish(
             ready_topic_id=None,
         )
     except TwitterPublishError as exc:
+        if "post" in locals():
+            await update_post_status(db, post["id"], status="draft")
         await query.answer(str(exc), show_alert=True)
         return
     finally:
@@ -147,4 +158,3 @@ async def handle_twitter_publish(
         f"{tweet_text}\n\nОпубликовано: {result.url}",
         disable_web_page_preview=True,
     )
-

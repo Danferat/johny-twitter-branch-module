@@ -105,9 +105,62 @@ async def test_handle_twitter_publish_surfaces_missing_credentials() -> None:
                 "src.bot.twitter.get_latest_revision_for_post",
                 AsyncMock(return_value=None),
             ):
-                await handle_twitter_publish(update, context)
+                with patch(
+                    "src.bot.twitter.mark_post_publishing",
+                    AsyncMock(return_value=True),
+                ):
+                    with patch("src.bot.twitter.update_post_status", AsyncMock()):
+                        await handle_twitter_publish(update, context)
 
     assert query.answer.await_args_list[-1].kwargs["show_alert"] is True
+
+
+@pytest.mark.asyncio
+async def test_handle_twitter_publish_skips_when_publish_already_in_progress() -> None:
+    update = MagicMock()
+    message = MagicMock()
+    message.message_id = 777
+    message.chat_id = 100
+    message.chat = MagicMock()
+    query = AsyncMock()
+    query.message = message
+    query.from_user = SimpleNamespace(id=42)
+    query.answer = AsyncMock()
+    update.callback_query = query
+
+    context = _make_context()
+    publisher = AsyncMock()
+    publisher.publish = AsyncMock()
+    context.bot_data["twitter_publisher"] = publisher
+
+    post = {
+        "id": 1,
+        "status": "draft",
+        "generated_text": "Short tweet",
+    }
+
+    with patch("src.bot.twitter.get_db") as mock_get_db:
+        db = AsyncMock()
+        mock_get_db.return_value = db
+        with patch(
+            "src.bot.twitter.get_post_by_message_id",
+            AsyncMock(return_value=post),
+        ):
+            with patch(
+                "src.bot.twitter.get_latest_revision_for_post",
+                AsyncMock(return_value=None),
+            ):
+                with patch(
+                    "src.bot.twitter.mark_post_publishing",
+                    AsyncMock(return_value=False),
+                ):
+                    await handle_twitter_publish(update, context)
+
+    publisher.publish.assert_not_awaited()
+    query.answer.assert_awaited_once_with(
+        "Публикация уже запущена или завершена.",
+        show_alert=True,
+    )
 
 
 def test_twitter_publisher_requires_credentials() -> None:
@@ -116,4 +169,3 @@ def test_twitter_publisher_requires_credentials() -> None:
 
     with pytest.raises(TwitterPublishError, match="Twitter"):
         asyncio.run(publisher.publish("hello"))
-
